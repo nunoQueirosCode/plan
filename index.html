@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- Configurações Web App iOS (PWA) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Plano Fit">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- Ícone automático para o Ecrã Principal do iPhone -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2310b981'/><text y='68' x='50' text-anchor='middle' font-size='55'>🔥</text></svg>">
+
+  <title>Plano Alimentar — Défice & Batch</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .glass {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .check-anim {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen select-none">
+
+  <!-- CABEÇALHO FIXO + BARRAS DE PROGRESSO -->
+  <header class="sticky top-0 z-30 glass border-b border-slate-800 px-4 pt-3 pb-4 shadow-lg">
+    <div class="max-w-md mx-auto">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+            <span>🔥</span> Plano Défice Calórico
+          </h1>
+          <p class="text-xs text-slate-400">Janela: 11h30 – 02h30 • 84 kg</p>
+        </div>
+
+        <!-- Seletor de Modo: Semana vs Fim de Semana -->
+        <button id="modeBtn" onclick="toggleMode()" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 active:scale-95 transition">
+          💻 Seg–Sex (2050 kcal)
+        </button>
+      </div>
+
+      <!-- Resumo de Macros Consumidos Hoje -->
+      <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800/80 space-y-2.5">
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-slate-400 font-medium">Progresso Diário</span>
+          <button onclick="resetDay()" class="text-slate-400 hover:text-rose-400 underline text-[11px]">Limpar Dia</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Barra Calorias -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300 font-medium">Calorias</span>
+              <span id="kcalText" class="font-bold text-emerald-400">0 / 2050 kcal</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div id="kcalBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Barra Proteína -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300 font-medium">Proteína</span>
+              <span id="protText" class="font-bold text-sky-400">0 / 180 g</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div id="protBar" class="bg-sky-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+
+    <!-- ABA 1: REFEIÇÕES DO DIA -->
+    <section id="tab-meals" class="space-y-3">
+      <div id="weekendBanner" class="hidden bg-amber-500/15 border border-amber-500/40 rounded-xl p-3 text-xs text-amber-200">
+        <strong>📦 Modo Armazém / Reposição Ativo (+250 kcal):</strong>
+        As doses de arroz e massa subiram de <strong>180g para 240g</strong> nas marmitas + <strong>1 banana extra</strong> a meio do turno.
+      </div>
+
+      <div id="mealsContainer" class="space-y-3"></div>
+    </section>
+
+    <!-- ABA 2: RECEITAS DE BATCH COOKING -->
+    <section id="tab-recipes" class="hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-base text-emerald-400">🍲 1. Strogonoff de Frango "Fit"</h2>
+          <span class="text-xs bg-slate-800 px-2.5 py-1 rounded-full text-slate-300">5 Almoços</span>
+        </div>
+        <div class="text-xs text-slate-300 space-y-1 bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
+          <p class="font-semibold text-white mb-1">Ingredientes (Tacho para 5 doses):</p>
+          <p>• <strong>900 g</strong> peito de frango aos cubos (cru)</p>
+          <p>• <strong>250g–300g</strong> cogumelos laminados</p>
+          <p>• <strong>200 g</strong> Iogurte Grego Ligeiro Mythos</p>
+          <p>• <strong>150 ml</strong> polpa de tomate + <strong>1 c. sopa</strong> mostarda</p>
+          <p>• 1 cebola, 3 dentes de alho, 1 c. sopa azeite, sal, pimenta e pimentão-doce</p>
+        </div>
+        <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside">
+          <li>Sela o frango no azeite bem quente com sal, pimenta e pimentão-doce (5–6 min).</li>
+          <li>Junta a cebola, alho e cogumelos e salteia 4 a 5 min até reduzirem.</li>
+          <li>Lume no mínimo: junta os <strong>150 ml de polpa de tomate</strong> e a <strong>mostarda</strong> (apura 2 min).</li>
+          <li><strong>Desliga o lume</strong>, espera 1 min e envolve os <strong>200g de iogurte Mythos</strong> até ficar cremoso.</li>
+          <li>Divide em 5 marmitas (~185g–190g de mistura cada). <em>Ao aquecer, mete 1 c. sopa de água!</em></li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-base text-amber-400">🍝 2. Carne Picada Grossa (Bolonhesa Seca)</h2>
+          <span class="text-xs bg-slate-800 px-2.5 py-1 rounded-full text-slate-300">5 Jantares</span>
+        </div>
+        <div class="text-xs text-slate-300 space-y-1 bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
+          <p class="font-semibold text-white mb-1">Ingredientes (Tacho para 5 doses):</p>
+          <p>• <strong>900 g</strong> carne picada de frango ou peru (crua)</p>
+          <p>• <strong>150 ml</strong> polpa de tomate + <strong>1 c. sopa cheia</strong> concentrado de tomate</p>
+          <p>• 1 cebola picada, 3 alhos, 1 c. sopa azeite, sal, pimenta, pimentão-doce e orégãos</p>
+        </div>
+        <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside">
+          <li>Refoga a cebola e o alho no azeite numa frigideira larga.</li>
+          <li>Junta a carne em <strong>lume alto</strong>, esmagando bem os grãos. <strong>Deixa secar toda a água</strong> até começar a fritar (8–10 min).</li>
+          <li>Junta os temperos, a colher de <strong>concentrado de tomate</strong> e os <strong>150 ml de polpa de tomate</strong>.</li>
+          <li>Apura 3 a 4 min sem tampa até o molho engrossar e agarrar todo à carne (zero líquido no fundo).</li>
+          <li>Divide em 5 marmitas (~140g de carne pronta por marmita).</li>
+        </ol>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <h2 class="font-bold text-base text-sky-400">🍚 3. Pesos dos Hidratos (Para 5 Dias)</h2>
+        <p class="text-xs text-slate-300">• <strong>Arroz Basmati/Vaporizado:</strong> Cozer <strong>350g cru</strong> ➔ rende ~900g cozinhado (<strong>180g</strong> por marmita Seg–Sex | <strong>240g</strong> Fim de Semana).</p>
+        <p class="text-xs text-slate-300">• <strong>Massa Fusilli/Penne:</strong> Cozer <strong>375g crua</strong> ➔ rende ~900g cozinhada (<strong>180g</strong> por marmita Seg–Sex | <strong>240g</strong> Fim de Semana).</p>
+      </div>
+    </section>
+
+    <!-- ABA 3: LISTA DE COMPRAS INTERATIVA -->
+    <section id="tab-shop" class="hidden space-y-4">
+      <div class="flex justify-between items-center">
+        <div class="flex gap-2">
+          <button id="btnShopWeek" onclick="switchShopList('week')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950">Semanal (7 Dias)</button>
+          <button id="btnShopMonth" onclick="switchShopList('month')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300">Mensal (Dispensa)</button>
+        </div>
+        <button onclick="clearShopping()" class="text-xs text-slate-400 underline">Desmarcar tudo</button>
+      </div>
+
+      <div id="shopContainer" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <!-- NAVEGAÇÃO INFERIOR ESTILO iOS -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 glass border-t border-slate-800 pb-safe">
+    <div class="max-w-md mx-auto grid grid-cols-3 h-16">
+      <button onclick="switchTab('meals')" id="nav-meals" class="flex flex-col items-center justify-center gap-1 text-emerald-400 font-semibold text-xs">
+        <span class="text-lg">🍽️</span>
+        <span>Plano Diário</span>
+      </button>
+      <button onclick="switchTab('recipes')" id="nav-recipes" class="flex flex-col items-center justify-center gap-1 text-slate-400 font-medium text-xs">
+        <span class="text-lg">👨‍🍳</span>
+        <span>Receitas Batch</span>
+      </button>
+      <button onclick="switchTab('shop')" id="nav-shop" class="flex flex-col items-center justify-center gap-1 text-slate-400 font-medium text-xs">
+        <span class="text-lg">🛒</span>
+        <span>Compras</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    // Dados das Refeições
+    const mealsData = [
+      {
+        id: 'm1',
+        time: '12h00 (Ao Acordar)',
+        title: 'Refeição 1 • Pequeno-Almoço',
+        kcal: 425,
+        prot: 32,
+        options: [
+          '🧀 <strong>Opção Salgada:</strong> 2 ovos (ou 2 ovos + 1 clara) mexidos em lume brando c/ <strong>1 fatia de queijo flamengo light</strong> derretida no fim + 2 fatias pão integral torrado + 1 fruta.',
+          '🍫 <strong>Opção Doce:</strong> <strong>200g Mythos Ligeiro</strong> + <strong>25g Whey</strong> + 2 a 3 c. sopa de água/leite (mexer até virar pudim) + <strong>50g Corn Flakes</strong> (ou 30g + 1 banana).'
+        ]
+      },
+      {
+        id: 'm2',
+        time: '15h30',
+        title: 'Refeição 2 • Almoço (Marmita A)',
+        kcal: 580,
+        kcalWeekend: 660,
+        prot: 54,
+        options: [
+          '🍲 <strong>Strogonoff de Frango "Fit":</strong> ~185g de Strogonoff pronto (180g frango cru) + <strong class="carb-dose">180g de Arroz Basmati cozinhado</strong> + 150g legumes.'
+        ]
+      },
+      {
+        id: 'm3',
+        time: '18h30 (Pré-Treino / Tarde)',
+        title: 'Refeição 3 • Lanche Saboroso',
+        kcal: 270,
+        prot: 23,
+        options: [
+          '🍕 <strong>Opção Pizzadilla:</strong> 1 tortilha de trigo (wrap médio) barrando <strong>1 a 2 c. sopa Ketchup 0% Mercadona</strong> + orégãos + 1 fatia queijo light + 3 a 4 fatias fiambre peru/frango (tostar na frigideira ou Airfryer).',
+          '🥪 <strong>Opção Tosta Mista:</strong> 2 fatias de pão + 1 fatia queijo flamengo light + 3 a 4 fatias fiambre peru/frango + fio de Ketchup 0% e orégãos.'
+        ]
+      },
+      {
+        id: 'm4',
+        time: '21h30 (Pós-Treino / Jantar)',
+        title: 'Refeição 4 • Jantar (Marmita B)',
+        kcal: 615,
+        kcalWeekend: 695,
+        prot: 52,
+        options: [
+          '🍝 <strong>Massa com Carne Picada Grossa:</strong> ~140g de carne picada pronta com molho espesso (180g crua) + <strong class="carb-dose">180g de Massa cozinhada</strong> + 150g legumes.'
+        ]
+      },
+      {
+        id: 'm5',
+        time: '00h30 – 01h00 (Antes de Deitar)',
+        title: 'Refeição 5 • Ceia Saciedade',
+        kcal: 210,
+        prot: 18,
+        options: [
+          '🥣 <strong>200g Iogurte Grego Ligeiro Mythos</strong> + <strong>15g frutos secos</strong> (amêndoas/nozes) OU 1 c. sopa rasa de manteiga de amendoim.',
+          '🍪 <em>Alternativa Doce:</em> Partir 1 a 2 bolachas (11g–22g) para dentro do Mythos em vez dos frutos secos.'
+        ]
+      },
+      {
+        id: 'm6',
+        time: 'Meio do Turno (Só Sáb/Dom)',
+        title: 'Reforço Extra • Armazém',
+        kcal: 90,
+        prot: 1,
+        weekendOnly: true,
+        options: [
+          '🍌 <strong>1 Banana média</strong> (ou 1 barra de cereais simples) no bolso para comer a meio do turno de reposição.'
+        ]
+      }
+    ];
+
+    // Listas de Compras
+    const shopLists = {
+      week: [
+        { cat: 'Talho, Charcutaria & Frescos', items: [
+          '1 kg a 1,1 kg Peito de Frango (aos cubos)',
+          '1 kg a 1,1 kg Carne Picada de Frango ou Peru',
+          '1,5 dúzias de Ovos (18 unidades)',
+          '1 a 2 baldes (1 kg) Iogurte Grego Ligeiro Mythos',
+          '2 emb. (200g) Queijo Flamengo Fatiado Light (50% menos gordura)',
+          '2 emb. (150g–200g) Fiambre Peito de Peru ou Frango'
+        ]},
+        { cat: 'Mercearia & Pão', items: [
+          '1 pacote/lata pequena Polpa de Tomate (300 ml)',
+          '1 bisnaga/latinha Concentrado de Tomate',
+          '1 emb. Ketchup 0% Açúcares Adicionados (Mercadona)',
+          '1 caixa (375g–500g) Corn Flakes (sem açúcar adicionado)',
+          '1 Pão de Forma grande (integral ou sem côdea)',
+          '1 pacote (8 unid.) Tortilhas de Trigo (Wraps médios)',
+          '1 pacote (500g) Massa (Fusilli ou Penne)',
+          '1 pacote (500g–1kg) Arroz Basmati ou Vaporizado'
+        ]},
+        { cat: 'Frutas & Legumes', items: [
+          '300 g Cogumelos frescos laminados (ou 2 latas)',
+          '2 a 3 sacos Legumes Congelados (brócolos, mistura chinesa)',
+          '7 a 10 peças de Fruta (bananas, maçãs)',
+          '3 a 4 Cebolas médias + 1 cabeça de Alho'
+        ]}
+      ],
+      month: [
+        { cat: 'Abastecimento Mensal & Suplementos', items: [
+          '1 kg Proteína Whey (Chocolate ou Baunilha)',
+          '4 emb. pequenas Polpa de Tomate + 2 bisnagas Concentrado',
+          '1 frasco Ketchup 0% Mercadona (dura o mês todo nas Pizzadillas)',
+          '2 a 3 pacotes (1 kg) Arroz Basmati / Vaporizado',
+          '4 pacotes (500 g) Massa Fusilli / Penne',
+          '3 a 4 caixas Corn Flakes',
+          '2 a 3 pacotes Tortilhas de Trigo (Wraps)',
+          '1 garrafa Azeite Virgem Extra',
+          '400g Frutos Secos ao natural ou 1 boião Manteiga de Amendoim 100%',
+          'Especiarias: Mostarda, Sal, Pimenta, Pimentão-doce e Orégãos'
+        ]}
+      ]
+    };
+
+    // Estado guardado no iPhone (localStorage)
+    let state = JSON.parse(localStorage.getItem('planoFitState')) || {
+      isWeekend: false,
+      checkedMeals: {},
+      checkedShop: {},
+      shopType: 'week'
+    };
+
+    function saveState() {
+      localStorage.setItem('planoFitState', JSON.stringify(state));
+    }
+
+    function toggleMode() {
+      state.isWeekend = !state.isWeekend;
+      saveState();
+      renderMeals();
+    }
+
+    function toggleMeal(id) {
+      state.checkedMeals[id] = !state.checkedMeals[id];
+      saveState();
+      renderMeals();
+    }
+
+    function resetDay() {
+      state.checkedMeals = {};
+      saveState();
+      renderMeals();
+    }
+
+    function renderMeals() {
+      const container = document.getElementById('mealsContainer');
+      const modeBtn = document.getElementById('modeBtn');
+      const banner = document.getElementById('weekendBanner');
+
+      if (state.isWeekend) {
+        modeBtn.innerHTML = '📦 Sáb–Dom (2300 kcal)';
+        modeBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 active:scale-95 transition';
+        banner.classList.remove('hidden');
+      } else {
+        modeBtn.innerHTML = '💻 Seg–Sex (2050 kcal)';
+        modeBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 active:scale-95 transition';
+        banner.classList.add('hidden');
+      }
+
+      let totalKcal = 0;
+      let totalProt = 0;
+      const targetKcal = state.isWeekend ? 2300 : 2050;
+      const targetProt = 180;
+
+      container.innerHTML = '';
+
+      mealsData.forEach(meal => {
+        if (meal.weekendOnly && !state.isWeekend) return;
+
+        const isChecked = !!state.checkedMeals[meal.id];
+        const mealKcal = (state.isWeekend && meal.kcalWeekend) ? meal.kcalWeekend : meal.kcal;
+
+        if (isChecked) {
+          totalKcal += mealKcal;
+          totalProt += meal.prot;
+        }
+
+        const carbText = state.isWeekend ? '240g cozinhado (Modo Armazém)' : '180g cozinhado';
+
+        const optionsHtml = meal.options.map(opt => {
+          const updatedOpt = opt.replace(/180g de (Arroz Basmati|Massa) cozinhad[oa]/g, `${carbText}`);
+          return `<div class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/60">${updatedOpt}</div>`;
+        }).join('');
+
+        container.innerHTML += `
+          <div onclick="toggleMeal('${meal.id}')" class="check-anim cursor-pointer rounded-2xl p-4 border ${isChecked ? 'bg-emerald-950/25 border-emerald-500/50 opacity-80' : 'bg-slate-900 border-slate-800'}">
+            <div class="flex items-start justify-between gap-3 mb-2.5">
+              <div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider ${isChecked ? 'text-emerald-400' : 'text-slate-400'}">${meal.time}</span>
+                <h3 class="font-bold text-sm ${isChecked ? 'line-through text-slate-400' : 'text-white'}">${meal.title}</h3>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">${mealKcal} kcal • ${meal.prot}g P</span>
+                <div class="w-6 h-6 rounded-full flex items-center justify-center border ${isChecked ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-bold' : 'border-slate-600'}">
+                  ${isChecked ? '✓' : ''}
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2">${optionsHtml}</div>
+          </div>
+        `;
+      });
+
+      // Atualizar barras no topo
+      document.getElementById('kcalText').innerText = `${totalKcal} / ${targetKcal} kcal`;
+      document.getElementById('protText').innerText = `${totalProt} / ${targetProt} g`;
+      document.getElementById('kcalBar').style.width = `${Math.min(100, (totalKcal / targetKcal) * 100)}%`;
+      document.getElementById('protBar').style.width = `${Math.min(100, (totalProt / targetProt) * 100)}%`;
+    }
+
+    function switchShopList(type) {
+      state.shopType = type;
+      saveState();
+      renderShop();
+    }
+
+    function toggleShopItem(key) {
+      state.checkedShop[key] = !state.checkedShop[key];
+      saveState();
+      renderShop();
+    }
+
+    function clearShopping() {
+      state.checkedShop = {};
+      saveState();
+      renderShop();
+    }
+
+    function renderShop() {
+      const btnWeek = document.getElementById('btnShopWeek');
+      const btnMonth = document.getElementById('btnShopMonth');
+      const container = document.getElementById('shopContainer');
+
+      if (state.shopType === 'week') {
+        btnWeek.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950';
+        btnMonth.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300';
+      } else {
+        btnMonth.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950';
+        btnWeek.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300';
+      }
+
+      const list = shopLists[state.shopType];
+      container.innerHTML = '';
+
+      list.forEach((group, gIdx) => {
+        const itemsHtml = group.items.map((item, iIdx) => {
+          const key = `${state.shopType}_${gIdx}_${iIdx}`;
+          const checked = !!state.checkedShop[key];
+          return `
+            <div onclick="toggleShopItem('${key}')" class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${checked ? 'bg-slate-900/40 border-slate-800/50 text-slate-500 line-through' : 'bg-slate-950/70 border-slate-800 text-slate-200'}">
+              <div class="w-5 h-5 rounded-md flex items-center justify-center border shrink-0 ${checked ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-bold text-xs' : 'border-slate-600'}">
+                ${checked ? '✓' : ''}
+              </div>
+              <span class="text-xs font-medium">${item}</span>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML += `
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">${group.cat}</h3>
+            <div class="space-y-2">${itemsHtml}</div>
+          </div>
+        `;
+      });
+    }
+
+    function switchTab(tab) {
+      ['meals', 'recipes', 'shop'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+        const nav = document.getElementById(`nav-${t}`);
+        if (t === tab) {
+          nav.className = 'flex flex-col items-center justify-center gap-1 text-emerald-400 font-semibold text-xs';
+        } else {
+          nav.className = 'flex flex-col items-center justify-center gap-1 text-slate-400 font-medium text-xs';
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Inicializar App
+    renderMeals();
+    renderShop();
+  </script>
+</body>
+</html>

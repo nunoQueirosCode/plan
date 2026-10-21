@@ -83,8 +83,45 @@
       <div id="mealsContainer" class="space-y-3"></div>
     </section>
 
-    <!-- ABA 2: RECEITAS DE BATCH COOKING & DETALHES -->
+    <!-- ABA 2: RECEITAS DE BATCH COOKING & CALCULADORA -->
     <section id="tab-recipes" class="hidden space-y-4">
+      
+      <!-- CALCULADORA DE MARMITAS INTEGRADA -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-base text-emerald-400">⚖️ Calculadora de Marmitas</h2>
+          <span class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">Batch Cooking</span>
+        </div>
+        <p class="text-xs text-slate-400">
+          Pesa o tacho cheio na balança, insere o peso do tacho vazio (tara) e divide pelas marmitas que vais preparar.
+        </p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Peso Total da Panela Cheia (g)</label>
+            <input type="number" id="pesoTotal" placeholder="Ex: 2500" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Peso da Panela Vazia (g)</label>
+              <input type="number" id="pesoTara" placeholder="Ex: 800" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Número de Marmitas</label>
+              <input type="number" id="numMarmitas" value="5" min="1" max="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            </div>
+          </div>
+        </div>
+        <button onclick="calcularMarmitas()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs py-2.5 rounded-xl transition active:scale-98">
+          Calcular Peso por Marmita
+        </button>
+        <div id="resultadoMarmita" class="hidden bg-slate-950/80 border border-emerald-500/30 rounded-xl p-3 text-center space-y-1">
+          <p class="text-[11px] text-slate-400 uppercase tracking-wider">Peso exato por cada marmita:</p>
+          <p id="pesoPorMarmitaText" class="text-xl font-extrabold text-emerald-400">0 g</p>
+          <p id="comidaLiquidaText" class="text-[11px] text-slate-500">Comida limpa: 0g no total</p>
+        </div>
+      </div>
+
+      <!-- RECEITAS -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="font-bold text-base text-emerald-400">🍲 1. Strogonoff de Frango "Fit"</h2>
@@ -102,7 +139,7 @@
           <li>Sela o frango no azeite quente com temperos (5–6 min).</li>
           <li>Junta cebola, alho e cogumelos e salteia 4 min.</li>
           <li>Baixa o lume, junta polpa de tomate e mostarda (2 min).</li>
-          <li><strong>Desliga o lume</strong>, espera 1 min e envolve os 200g de Mythos. Divide em 5 marmitas.</li>
+          <li><strong>Desliga o lume</strong>, espera 1 min e envolve os 200g de Mythos. Pesa na calculadora e divide em 5 marmitas.</li>
         </ol>
       </div>
 
@@ -120,7 +157,7 @@
         <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside">
           <li>Refoga cebola e alho no azeite.</li>
           <li>Junta a carne em lume alto e <strong>deixa secar toda a água</strong> até começar a fritar (8-10 min).</li>
-          <li>Junta polpa e concentrado de tomate. Apura 3-4 min sem tampa até engrossar e agarrar à carne. Divide em 5 marmitas.</li>
+          <li>Junta polpa e concentrado de tomate. Apura 3-4 min sem tampa até engrossar e agarrar à carne. Pesa e divide em 5 marmitas.</li>
         </ol>
       </div>
 
@@ -469,6 +506,27 @@
         }
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function calcularMarmitas() {
+      const total = parseFloat(document.getElementById('pesoTotal').value) || 0;
+      const tara = parseFloat(document.getElementById('pesoTara').value) || 0;
+      const marmitas = parseInt(document.getElementById('numMarmitas').value) || 1;
+      const box = document.getElementById('resultadoMarmita');
+
+      if (total <= tara) {
+        alert('O peso total tem de ser superior ao peso da panela vazia!');
+        box.classList.add('hidden');
+        return;
+      }
+
+      const pesoLiquido = total - tara;
+      const pesoPorMarmita = Math.round(pesoLiquido / marmitas);
+
+      document.getElementById('pesoPorMarmitaText').innerText = `${pesoPorMarmita} g`;
+      document.getElementById('comidaLiquidaText').innerText = `Comida limpa: ${pesoLiquido}g no total (${marmitas} marmitas)`;
+      
+      box.classList.remove('hidden');
     }
 
     renderMeals();

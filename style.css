@@ -1,10 +1,6 @@
-/* ==========================================================
-   Plano Alimentar — Estilos CSS Responsivos & Mobile First
-   ========================================================== */
-
 :root {
-  --bg-primary: #020617; /* Slate 950 */
-  --bg-glass: rgba(30, 41, 59, 0.9); /* Slate 800 com opacidade */
+  --bg-primary: #020617;
+  --bg-glass: rgba(30, 41, 59, 0.9);
   --accent-emerald: #10b981;
   --accent-sky: #0ea5e9;
   --text-main: #f8fafc;
@@ -12,7 +8,6 @@
   --border-color: #1e293b;
 }
 
-/* Reset Global & Comportamento em iOS */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -32,14 +27,12 @@ body {
   overflow-x: hidden;
 }
 
-/* Efeito de Vidro (Glassmorphism) para Cabeçalhos e Barras */
 .glass {
   background: var(--bg-glass);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
-/* Animações suaves para interações com toques */
 .check-anim {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -48,7 +41,6 @@ body {
   transform: scale(0.98);
 }
 
-/* Ajustes de layout responsivo para tablets e computadores caso aberto no browser */
 @media (min-width: 640px) {
   main, header > div, nav > div {
     max-width: 440px !important;
@@ -57,12 +49,10 @@ body {
   }
 }
 
-/* Garantir que barras inferiores respeitam a área segura de comandos do iPhone (Home Indicator) */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Estilização suave para scrollbars caso apareçam */
 ::-webkit-scrollbar {
   width: 4px;
 }
